@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <base target="_top">
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Air Quality & Battery Monitoring Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
     
     :root {
       --bg-page: #f8fafc;
@@ -36,7 +39,7 @@
       display: flex;
     }
 
-    /* ฝั่งซ้าย (Sidebar) */
+    /* Sidebar */
     .sidebar {
       width: 320px;
       background: var(--bg-card);
@@ -80,6 +83,7 @@
       position: relative;
       overflow: hidden;
     }
+
     .card::before {
       content: '';
       position: absolute;
@@ -88,9 +92,18 @@
       width: 5px;
       height: 100%;
     }
-    .card.gas::before { background: var(--danger-color); }
-    .card.temp::before { background: var(--warning-color); }
-    .card.eco2::before { background: var(--success-color); }
+
+    .card.gas::before {
+      background: var(--danger-color);
+    }
+
+    .card.temp::before {
+      background: var(--warning-color);
+    }
+
+    .card.eco2::before {
+      background: var(--success-color);
+    }
 
     .card-title {
       font-size: 13px;
@@ -107,12 +120,14 @@
       align-items: baseline;
       gap: 8px;
     }
+
     .card-value {
       font-size: 32px;
       font-weight: 700;
       color: var(--text-main);
       line-height: 1.1;
     }
+
     .card-unit {
       font-size: 12px;
       font-weight: 500;
@@ -125,9 +140,21 @@
       border-radius: 4px;
       font-weight: 600;
     }
-    .badge.normal { background: #d1fae5; color: #065f46; }
-    .badge.warning { background: #fef3c7; color: #92400e; }
-    .badge.danger { background: #fee2e2; color: #991b1b; }
+
+    .badge.normal {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .badge.warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .badge.danger {
+      background: #fee2e2;
+      color: #991b1b;
+    }
 
     .footer-status {
       background: #f1f5f9;
@@ -141,6 +168,7 @@
       color: var(--text-muted);
       margin-top: auto;
     }
+
     .pulse {
       width: 8px;
       height: 8px;
@@ -149,15 +177,28 @@
       animation: pulseAnim 1.4s infinite;
       flex-shrink: 0;
     }
-    .pulse.error { background: var(--danger-color); animation: none; }
 
-    @keyframes pulseAnim {
-      0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
-      70% { transform: scale(1.1); box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
-      100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    .pulse.error {
+      background: var(--danger-color);
+      animation: none;
     }
 
-    /* ฝั่งขวา (Main Content) */
+    @keyframes pulseAnim {
+      0% {
+        transform: scale(0.9);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+      }
+      70% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 5px rgba(16, 185, 129, 0);
+      }
+      100% {
+        transform: scale(0.9);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+      }
+    }
+
+    /* Main Content */
     .main-content {
       flex: 1;
       height: 100vh;
@@ -174,8 +215,18 @@
       margin-bottom: 12px;
       flex-shrink: 0;
     }
-    .main-header h2 { font-size: 19px; font-weight: 600; color: var(--text-main); }
-    .main-header p { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+    .main-header h2 {
+      font-size: 19px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .main-header p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
 
     .info-btn {
       background: var(--primary-color);
@@ -189,13 +240,16 @@
       cursor: pointer;
       transition: 0.2s;
     }
-    .info-btn:hover { background: #1d4ed8; }
 
-    /* กล่องสถานะตรงกลาง */
+    .info-btn:hover {
+      background: #1d4ed8;
+    }
+
     .status-box-wrapper { 
       margin-bottom: 14px; 
       flex-shrink: 0;
     }
+
     .status-box {
       border-radius: 12px;
       padding: 16px 20px;
@@ -206,16 +260,19 @@
       justify-content: center;
       border: 1.5px solid transparent;
     }
+
     .status-box.status-normal {
       background: #ecfdf5;
       border-color: #10b981;
       color: #047857;
     }
+
     .status-box.status-warning {
       background: #fffbeb;
       border-color: #f59e0b;
       color: #b45309;
     }
+
     .status-box.status-danger {
       background: #fef2f2;
       border-color: #ef4444;
@@ -228,13 +285,13 @@
       line-height: 1.1;
       margin-bottom: 4px;
     }
+
     .status-box-desc { 
       font-size: 13px; 
       color: var(--text-main); 
       opacity: 0.85; 
     }
 
-    /* กล่องกราฟขยายแนวยาวรับกับหน้าจอ พอดีไม่ล้น */
     .chart-box {
       background: var(--bg-card);
       border: 1px solid var(--border-color);
@@ -250,7 +307,10 @@
     /* Modal */
     .modal-overlay {
       position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       background: rgba(15, 23, 42, 0.4);
       backdrop-filter: blur(4px);
       display: flex;
@@ -261,7 +321,12 @@
       visibility: hidden;
       transition: 0.2s;
     }
-    .modal-overlay.show { opacity: 1; visibility: visible; }
+
+    .modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
     .modal-card {
       background: var(--bg-card);
       border-radius: 12px;
@@ -271,6 +336,7 @@
       border: 1px solid var(--border-color);
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     }
+
     .modal-header {
       display: flex;
       justify-content: space-between;
@@ -279,10 +345,31 @@
       border-bottom: 1px solid var(--border-color);
       padding-bottom: 8px;
     }
-    table { width: 100%; border-collapse: collapse; font-size: 12.5px; text-align: left; }
-    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border-color); }
-    th { background: #f8fafc; color: var(--text-main); }
-    .close-btn { background: none; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      background: #f8fafc;
+      color: var(--text-main);
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 18px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -332,7 +419,7 @@
     <div class="footer-status">
       <div class="pulse" id="statusDot"></div>
       <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-        อัปเดตล่าสุด: <strong id="time" style="color:var(--text-main)">กำลังโหลด...</strong>
+        อัปเดตล่าสุด: <strong id="time" style="color:var(--text-main)">กำลังเชื่อมต่อ API...</strong>
       </span>
     </div>
   </div>
@@ -346,23 +433,20 @@
       <button class="info-btn" onclick="toggleModal()">ข้อมูลตารางระดับความปลอดภัย</button>
     </div>
 
-    <!-- กล่องแสดงสถานะตรงกลาง -->
     <div class="status-box-wrapper">
       <div id="centralStatusBox" class="status-box status-normal">
-        <div class="status-box-title" id="statusText">ปกติ</div>
+        <div class="status-box-title" id="statusText">กำลังโหลด...</div>
         <div class="status-box-desc" id="statusDesc">
-          ทุกระบบทำงานปกติ ค่าอยู่ในเกณฑ์มาตรฐานความปลอดภัย
+          รอการดึงข้อมูลจากฐานข้อมูล...
         </div>
       </div>
     </div>
 
-    <!-- กราฟเส้นแนวยาว -->
     <div class="chart-box">
       <canvas id="mainChart"></canvas>
     </div>
   </div>
 
-  <!-- Modal ตารางมาตรฐาน -->
   <div class="modal-overlay" id="tableModal" onclick="handleOutsideClick(event)">
     <div class="modal-card">
       <div class="modal-header">
@@ -403,15 +487,20 @@
   </div>
 
 <script>
+  // Web App API URL ล่าสุด
+  const API_URL = "https://script.google.com/macros/s/AKfycbw1pfvpb88aQFY3kSYL-9iCoZHHogjjb9Bt3YOIs1kBlMpfotjzahpSg5u4P_6FgdGHTw/exec"; 
+  
   const UPDATE_INTERVAL = 3000;
   let requestRunning = false;
 
-  function toggleModal() {
-    document.getElementById("tableModal").classList.toggle("show");
+  function toggleModal() { 
+    document.getElementById("tableModal").classList.toggle("show"); 
   }
 
-  function handleOutsideClick(e) {
-    if (e.target.id === "tableModal") toggleModal();
+  function handleOutsideClick(e) { 
+    if (e.target.id === "tableModal") {
+      toggleModal();
+    }
   }
 
   function calculateDangerPercent(val, type) {
@@ -420,17 +509,29 @@
     
     let p = 0;
     if (type === "temp") {
-      if (raw <= 40) p = (raw / 40) * 50;
-      else if (raw < 45) p = 50 + ((raw - 40) / (45 - 40)) * 30;
-      else p = 80 + Math.min(((raw - 45) / 15) * 20, 20);
+      if (raw <= 40) {
+        p = (raw / 40) * 50;
+      } else if (raw < 45) {
+        p = 50 + ((raw - 40) / (45 - 40)) * 30;
+      } else {
+        p = 80 + Math.min(((raw - 45) / 15) * 20, 20);
+      }
     } else if (type === "gas") {
-      if (raw <= 300) p = (raw / 300) * 50;
-      else if (raw < 500) p = 50 + ((raw - 300) / (500 - 300)) * 30;
-      else p = 80 + Math.min(((raw - 500) / 300) * 20, 20);
+      if (raw <= 300) {
+        p = (raw / 300) * 50;
+      } else if (raw < 500) {
+        p = 50 + ((raw - 300) / (500 - 300)) * 30;
+      } else {
+        p = 80 + Math.min(((raw - 500) / 300) * 20, 20);
+      }
     } else if (type === "eco2") {
-      if (raw <= 700) p = (raw / 700) * 50;
-      else if (raw < 1000) p = 50 + ((raw - 700) / (1000 - 700)) * 30;
-      else p = 80 + Math.min(((raw - 1000) / 500) * 20, 20);
+      if (raw <= 700) {
+        p = (raw / 700) * 50;
+      } else if (raw < 1000) {
+        p = 50 + ((raw - 700) / (1000 - 700)) * 30;
+      } else {
+        p = 80 + Math.min(((raw - 1000) / 500) * 20, 20);
+      }
     }
 
     if (p > 100) p = 100;
@@ -444,63 +545,63 @@
     data: {
       labels: [],
       datasets: [
-        {
-          label: 'Gas (% ความอันตราย)',
-          data: [],
-          borderColor: '#ef4444',
-          backgroundColor: 'rgba(239, 68, 68, 0.08)',
-          borderWidth: 2,
-          tension: 0.3,
-          fill: true
+        { 
+          label: 'Gas (% ความอันตราย)', 
+          data: [], 
+          borderColor: '#ef4444', 
+          backgroundColor: 'rgba(239, 68, 68, 0.08)', 
+          borderWidth: 2, 
+          tension: 0.3, 
+          fill: true 
         },
-        {
-          label: 'อุณหภูมิ (% ความอันตราย)',
-          data: [],
-          borderColor: '#f59e0b',
-          backgroundColor: 'rgba(245, 158, 11, 0.08)',
-          borderWidth: 2,
-          tension: 0.3,
-          fill: true
+        { 
+          label: 'อุณหภูมิ (% ความอันตราย)', 
+          data: [], 
+          borderColor: '#f59e0b', 
+          backgroundColor: 'rgba(245, 158, 11, 0.08)', 
+          borderWidth: 2, 
+          tension: 0.3, 
+          fill: true 
         },
-        {
-          label: 'eCO2 (% ความอันตราย)',
-          data: [],
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.08)',
-          borderWidth: 2,
-          tension: 0.3,
-          fill: true
+        { 
+          label: 'eCO2 (% ความอันตราย)', 
+          data: [], 
+          borderColor: '#10b981', 
+          backgroundColor: 'rgba(16, 185, 129, 0.08)', 
+          borderWidth: 2, 
+          tension: 0.3, 
+          fill: true 
         }
       ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
+      plugins: { 
         legend: { 
-          position: 'top',
+          position: 'top', 
           labels: { 
             color: '#0f172a', 
-            font: { family: 'Prompt', size: 12 },
-            boxWidth: 14,
-            padding: 12
+            font: { family: 'Prompt', size: 12 }, 
+            boxWidth: 14, 
+            padding: 12 
           } 
-        }
+        } 
       },
       scales: {
-        x: {
-          ticks: { color: '#64748b', font: { size: 11 } },
-          grid: { color: '#f1f5f9' }
+        x: { 
+          ticks: { color: '#64748b', font: { size: 11 } }, 
+          grid: { color: '#f1f5f9' } 
         },
-        y: {
-          min: 0,
-          max: 100,
+        y: { 
+          min: 0, 
+          max: 100, 
           ticks: { 
-            color: '#64748b',
-            font: { size: 11 },
-            callback: function(value) { return value + '%'; }
-          },
-          grid: { color: '#f1f5f9' }
+            color: '#64748b', 
+            font: { size: 11 }, 
+            callback: function(value) { return value + '%'; } 
+          }, 
+          grid: { color: '#f1f5f9' } 
         }
       }
     }
@@ -508,37 +609,37 @@
 
   function getSystemStatus(gas, temp, eco2) {
     if (gas >= 500 || temp >= 45 || eco2 >= 1000) {
-      return {
-        text: "อันตราย",
-        desc: "ตรวจพบค่าเกินมาตรฐานความปลอดภัยระดับวิกฤต (สั่งตัดไฟ Main Contactor ทันที)",
-        cssClass: "status-danger"
+      return { 
+        text: "อันตราย", 
+        desc: "ตรวจพบค่าเกินมาตรฐานความปลอดภัยระดับวิกฤต (สั่งตัดไฟ Main Contactor ทันที)", 
+        cssClass: "status-danger" 
       };
     }
     if (gas >= 300 || temp >= 40 || eco2 >= 700) {
-      return {
-        text: "ควรระวัง",
-        desc: "ตรวจพบการทำงาน Overload หรือค่าเริ่มสูงเกินเกณฑ์ปกติ (กรุณาเข้าตรวจสอบระบบ)",
-        cssClass: "status-warning"
+      return { 
+        text: "ควรระวัง", 
+        desc: "ตรวจพบการทำงาน Overload หรือค่าเริ่มสูงเกินเกณฑ์ปกติ (กรุณาเข้าตรวจสอบระบบ)", 
+        cssClass: "status-warning" 
       };
     }
-    return {
-      text: "ปกติ",
-      desc: "ทุกระบบทำงานปกติ ค่าอยู่ในเกณฑ์มาตรฐานความปลอดภัย",
-      cssClass: "status-normal"
+    return { 
+      text: "ปกติ", 
+      desc: "ทุกระบบทำงานปกติ ค่าอยู่ในเกณฑ์มาตรฐานความปลอดภัย", 
+      cssClass: "status-normal" 
     };
   }
 
   function updateCardBadge(val, limitWarning, limitDanger, badgeId) {
     const badge = document.getElementById(badgeId);
-    if (val >= limitDanger) {
-      badge.textContent = "DANGER";
-      badge.className = "badge danger";
-    } else if (val >= limitWarning) {
-      badge.textContent = "WARNING";
-      badge.className = "badge warning";
-    } else {
-      badge.textContent = "NORMAL";
-      badge.className = "badge normal";
+    if (val >= limitDanger) { 
+      badge.textContent = "DANGER"; 
+      badge.className = "badge danger"; 
+    } else if (val >= limitWarning) { 
+      badge.textContent = "WARNING"; 
+      badge.className = "badge warning"; 
+    } else { 
+      badge.textContent = "NORMAL"; 
+      badge.className = "badge normal"; 
     }
   }
 
@@ -581,24 +682,30 @@
   function showError(err) {
     console.error("Fetch Error:", err);
     document.getElementById("statusDot").classList.add("error");
+    document.getElementById("time").textContent = "เชื่อมต่อ API ล้มเหลว";
   }
 
-  function updateData() {
+  async function updateData() {
     if (requestRunning) return;
     requestRunning = true;
 
-    google.script.run
-      .withSuccessHandler(function(data) {
-        showData(data);
-        requestRunning = false;
-        setTimeout(updateData, UPDATE_INTERVAL);
-      })
-      .withFailureHandler(function(err) {
-        showError(err);
-        requestRunning = false;
-        setTimeout(updateData, 3000);
-      })
-      .getLastData();
+    try {
+      const response = await fetch(API_URL);
+      const data = await response.json();
+      
+      if (data.success === false) {
+        throw new Error(data.error);
+      }
+
+      showData(data);
+      requestRunning = false;
+      setTimeout(updateData, UPDATE_INTERVAL);
+      
+    } catch (err) {
+      showError(err);
+      requestRunning = false;
+      setTimeout(updateData, UPDATE_INTERVAL);
+    }
   }
 
   updateData();
