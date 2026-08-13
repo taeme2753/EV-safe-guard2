@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Air Quality & Battery Monitoring Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --border-color: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      
+      --danger-color: #ef4444;
+      --warning-color: #f59e0b;
+      --success-color: #10b981;
+      --primary-color: #2563eb;
+    }
+
+    html, body {
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      font-family: 'Prompt', sans-serif;
+      background: var(--bg-page);
+      color: var(--text-main);
+    }
+
+    body {
+      display: flex;
+    }
+
+    /* ฝั่งซ้าย (Sidebar) */
+    .sidebar {
+      width: 320px;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border-color);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      flex-shrink: 0;
+      box-shadow: 2px 0 8px rgba(0, 0, 0, 0.02);
+    }
+
+    .sidebar-header h1 {
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.4;
+      color: var(--text-main);
+      margin-bottom: 12px;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border-color);
+      border: none;
+      margin-bottom: 14px;
+    }
+
+    .cards-vertical {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 14px 18px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 5px;
+      height: 100%;
+    }
+    .card.gas::before { background: var(--danger-color); }
+    .card.temp::before { background: var(--warning-color); }
+    .card.eco2::before { background: var(--success-color); }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .card-value-box {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .card-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.1;
+    }
+    .card-unit {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .badge.normal { background: #d1fae5; color: #065f46; }
+    .badge.warning { background: #fef3c7; color: #92400e; }
+    .badge.danger { background: #fee2e2; color: #991b1b; }
+
+    .footer-status {
+      background: #f1f5f9;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 9px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: auto;
+    }
+    .pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success-color);
+      animation: pulseAnim 1.4s infinite;
+      flex-shrink: 0;
+    }
+    .pulse.error { background: var(--danger-color); animation: none; }
+
+    @keyframes pulseAnim {
+      0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+      70% { transform: scale(1.1); box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* ฝั่งขวา (Main Content) */
+    .main-content {
+      flex: 1;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 16px 24px;
+      overflow: hidden;
+    }
+
+    .main-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+    .main-header h2 { font-size: 19px; font-weight: 600; color: var(--text-main); }
+    .main-header p { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+    .info-btn {
+      background: var(--primary-color);
+      color: #ffffff;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 6px;
+      font-family: 'Prompt', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .info-btn:hover { background: #1d4ed8; }
+
+    /* กล่องสถานะตรงกลาง */
+    .status-box-wrapper { 
+      margin-bottom: 14px; 
+      flex-shrink: 0;
+    }
+    .status-box {
+      border-radius: 12px;
+      padding: 16px 20px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 1.5px solid transparent;
+    }
+    .status-box.status-normal {
+      background: #ecfdf5;
+      border-color: #10b981;
+      color: #047857;
+    }
+    .status-box.status-warning {
+      background: #fffbeb;
+      border-color: #f59e0b;
+      color: #b45309;
+    }
+    .status-box.status-danger {
+      background: #fef2f2;
+      border-color: #ef4444;
+      color: #b91c1c;
+    }
+
+    .status-box-title {
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+    .status-box-desc { 
+      font-size: 13px; 
+      color: var(--text-main); 
+      opacity: 0.85; 
+    }
+
+    /* กล่องกราฟขยายแนวยาวรับกับหน้าจอ พอดีไม่ล้น */
+    .chart-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px 20px 10px 20px;
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      position: relative;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(4px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      opacity: 0;
+      visibility: hidden;
+      transition: 0.2s;
+    }
+    .modal-overlay.show { opacity: 1; visibility: visible; }
+    .modal-card {
+      background: var(--bg-card);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 750px;
+      padding: 20px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; text-align: left; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border-color); }
+    th { background: #f8fafc; color: var(--text-main); }
+    .close-btn { background: none; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h1>ระบบตรวจวัดคุณภาพอากาศและเฝ้าระวังแบตเตอรี่</h1>
+    </div>
+    
+    <hr class="divider">
+
+    <div class="cards-vertical">
+      <div class="card gas">
+        <div class="card-title">
+          <span>Gas</span>
+          <span id="gasBadge" class="badge normal">NORMAL</span>
+        </div>
+        <div class="card-value-box">
+          <div class="card-value" id="ppm">--</div>
+          <div class="card-unit">PPM</div>
+        </div>
+      </div>
+      
+      <div class="card temp">
+        <div class="card-title">
+          <span>อุณหภูมิ (°C)</span>
+          <span id="tempBadge" class="badge normal">NORMAL</span>
+        </div>
+        <div class="card-value-box">
+          <div class="card-value" id="temp">--</div>
+          <div class="card-unit">°C</div>
+        </div>
+      </div>
+      
+      <div class="card eco2">
+        <div class="card-title">
+          <span>คาร์บอน (eCO2)</span>
+          <span id="eco2Badge" class="badge normal">NORMAL</span>
+        </div>
+        <div class="card-value-box">
+          <div class="card-value" id="eco2">--</div>
+          <div class="card-unit">PPM</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-status">
+      <div class="pulse" id="statusDot"></div>
+      <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+        อัปเดตล่าสุด: <strong id="time" style="color:var(--text-main)">กำลังโหลด...</strong>
+      </span>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="main-header">
+      <div>
+        <h2>แดชบอร์ดสัดส่วนเปอร์เซ็นต์ความอันตราย (รายวัน)</h2>
+        <p>ยิ่งเปอร์เซ็นต์สูงยิ่งเข้าใกล้ระดับอันตราย</p>
+      </div>
+      <button class="info-btn" onclick="toggleModal()">ข้อมูลตารางระดับความปลอดภัย</button>
+    </div>
+
+    <!-- กล่องแสดงสถานะตรงกลาง -->
+    <div class="status-box-wrapper">
+      <div id="centralStatusBox" class="status-box status-normal">
+        <div class="status-box-title" id="statusText">ปกติ</div>
+        <div class="status-box-desc" id="statusDesc">
+          ทุกระบบทำงานปกติ ค่าอยู่ในเกณฑ์มาตรฐานความปลอดภัย
+        </div>
+      </div>
+    </div>
+
+    <!-- กราฟเส้นแนวยาว -->
+    <div class="chart-box">
+      <canvas id="mainChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Modal ตารางมาตรฐาน -->
+  <div class="modal-overlay" id="tableModal" onclick="handleOutsideClick(event)">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-size:15px;">ตารางเกณฑ์มาตรฐานความปลอดภัย</h3>
+        <button class="close-btn" onclick="toggleModal()">✕</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>พารามิเตอร์</th>
+            <th>ปกติ</th>
+            <th>ควรระวัง</th>
+            <th>อันตราย</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Gas (MQ-2)</strong></td>
+            <td>ต่ำกว่า 300 PPM</td>
+            <td>300 - 499 PPM</td>
+            <td>500 PPM ขึ้นไป</td>
+          </tr>
+          <tr>
+            <td><strong>อุณหภูมิ (°C)</strong></td>
+            <td>ต่ำกว่า 40 °C</td>
+            <td>40 - 44 °C</td>
+            <td>45 °C ขึ้นไป</td>
+          </tr>
+          <tr>
+            <td><strong>คาร์บอน (eCO2)</strong></td>
+            <td>ต่ำกว่า 700 PPM</td>
+            <td>700 - 999 PPM</td>
+            <td>1,000 PPM ขึ้นไป</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+  const UPDATE_INTERVAL = 3000;
+  let requestRunning = false;
+
+  function toggleModal() {
+    document.getElementById("tableModal").classList.toggle("show");
+  }
+
+  function handleOutsideClick(e) {
+    if (e.target.id === "tableModal") toggleModal();
+  }
+
+  function calculateDangerPercent(val, type) {
+    let raw = parseFloat(val);
+    if (isNaN(raw)) return 0;
+    
+    let p = 0;
+    if (type === "temp") {
+      if (raw <= 40) p = (raw / 40) * 50;
+      else if (raw < 45) p = 50 + ((raw - 40) / (45 - 40)) * 30;
+      else p = 80 + Math.min(((raw - 45) / 15) * 20, 20);
+    } else if (type === "gas") {
+      if (raw <= 300) p = (raw / 300) * 50;
+      else if (raw < 500) p = 50 + ((raw - 300) / (500 - 300)) * 30;
+      else p = 80 + Math.min(((raw - 500) / 300) * 20, 20);
+    } else if (type === "eco2") {
+      if (raw <= 700) p = (raw / 700) * 50;
+      else if (raw < 1000) p = 50 + ((raw - 700) / (1000 - 700)) * 30;
+      else p = 80 + Math.min(((raw - 1000) / 500) * 20, 20);
+    }
+
+    if (p > 100) p = 100;
+    if (p < 0) p = 0;
+    return parseFloat(p.toFixed(1));
+  }
+
+  const ctx = document.getElementById('mainChart').getContext('2d');
+  const mainChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: 'Gas (% ความอันตราย)',
+          data: [],
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239, 68, 68, 0.08)',
+          borderWidth: 2,
+          tension: 0.3,
+          fill: true
+        },
+        {
+          label: 'อุณหภูมิ (% ความอันตราย)',
+          data: [],
+          borderColor: '#f59e0b',
+          backgroundColor: 'rgba(245, 158, 11, 0.08)',
+          borderWidth: 2,
+          tension: 0.3,
+          fill: true
+        },
+        {
+          label: 'eCO2 (% ความอันตราย)',
+          data: [],
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.08)',
+          borderWidth: 2,
+          tension: 0.3,
+          fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { 
+          position: 'top',
+          labels: { 
+            color: '#0f172a', 
+            font: { family: 'Prompt', size: 12 },
+            boxWidth: 14,
+            padding: 12
+          } 
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#64748b', font: { size: 11 } },
+          grid: { color: '#f1f5f9' }
+        },
+        y: {
+          min: 0,
+          max: 100,
+          ticks: { 
+            color: '#64748b',
+            font: { size: 11 },
+            callback: function(value) { return value + '%'; }
+          },
+          grid: { color: '#f1f5f9' }
+        }
+      }
+    }
+  });
+
+  function getSystemStatus(gas, temp, eco2) {
+    if (gas >= 500 || temp >= 45 || eco2 >= 1000) {
+      return {
+        text: "อันตราย",
+        desc: "ตรวจพบค่าเกินมาตรฐานความปลอดภัยระดับวิกฤต (สั่งตัดไฟ Main Contactor ทันที)",
+        cssClass: "status-danger"
+      };
+    }
+    if (gas >= 300 || temp >= 40 || eco2 >= 700) {
+      return {
+        text: "ควรระวัง",
+        desc: "ตรวจพบการทำงาน Overload หรือค่าเริ่มสูงเกินเกณฑ์ปกติ (กรุณาเข้าตรวจสอบระบบ)",
+        cssClass: "status-warning"
+      };
+    }
+    return {
+      text: "ปกติ",
+      desc: "ทุกระบบทำงานปกติ ค่าอยู่ในเกณฑ์มาตรฐานความปลอดภัย",
+      cssClass: "status-normal"
+    };
+  }
+
+  function updateCardBadge(val, limitWarning, limitDanger, badgeId) {
+    const badge = document.getElementById(badgeId);
+    if (val >= limitDanger) {
+      badge.textContent = "DANGER";
+      badge.className = "badge danger";
+    } else if (val >= limitWarning) {
+      badge.textContent = "WARNING";
+      badge.className = "badge warning";
+    } else {
+      badge.textContent = "NORMAL";
+      badge.className = "badge normal";
+    }
+  }
+
+  function showData(historyList) {
+    if (!Array.isArray(historyList) || historyList.length === 0) return;
+
+    let latest = historyList[historyList.length - 1];
+
+    document.getElementById("ppm").textContent = latest.ppm;
+    document.getElementById("temp").textContent = latest.temp;
+    document.getElementById("eco2").textContent = latest.eco2;
+    document.getElementById("time").textContent = latest.fullTime;
+
+    updateCardBadge(latest.ppm, 300, 500, "gasBadge");
+    updateCardBadge(latest.temp, 40, 45, "tempBadge");
+    updateCardBadge(latest.eco2, 700, 1000, "eco2Badge");
+
+    const statusObj = getSystemStatus(latest.ppm, latest.temp, latest.eco2);
+    const centralBox = document.getElementById("centralStatusBox");
+    centralBox.className = "status-box " + statusObj.cssClass;
+    document.getElementById("statusText").textContent = statusObj.text;
+    document.getElementById("statusDesc").textContent = statusObj.desc;
+
+    mainChart.data.labels = [];
+    mainChart.data.datasets[0].data = [];
+    mainChart.data.datasets[1].data = [];
+    mainChart.data.datasets[2].data = [];
+
+    historyList.forEach(item => {
+      mainChart.data.labels.push(item.time);
+      mainChart.data.datasets[0].data.push(calculateDangerPercent(item.ppm, "gas"));
+      mainChart.data.datasets[1].data.push(calculateDangerPercent(item.temp, "temp"));
+      mainChart.data.datasets[2].data.push(calculateDangerPercent(item.eco2, "eco2"));
+    });
+
+    mainChart.update('none');
+    document.getElementById("statusDot").classList.remove("error");
+  }
+
+  function showError(err) {
+    console.error("Fetch Error:", err);
+    document.getElementById("statusDot").classList.add("error");
+  }
+
+  function updateData() {
+    if (requestRunning) return;
+    requestRunning = true;
+
+    google.script.run
+      .withSuccessHandler(function(data) {
+        showData(data);
+        requestRunning = false;
+        setTimeout(updateData, UPDATE_INTERVAL);
+      })
+      .withFailureHandler(function(err) {
+        showError(err);
+        requestRunning = false;
+        setTimeout(updateData, 3000);
+      })
+      .getLastData();
+  }
+
+  updateData();
+</script>
+</body>
+</html>
